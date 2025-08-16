@@ -23,9 +23,18 @@ A customizable Persian date picker that provides:
 - Comprehensive date range validation
 - Clean state management and mode isolation
 - Performance optimizations with LRU cache for faster date calculations
+- Comprehensive keyboard navigation support:
+  * Escape key: Cancel/close datepicker
+  * Enter key: Confirm selection
+  * A key / Right Arrow: Navigate to previous day (crosses month boundaries)
+  * D key / Left Arrow: Navigate to next day (crosses month boundaries)
+  * W key: Navigate to previous week (stays within current month)
+  * S key: Navigate to next week (stays within current month)
+  * Keyboard events only active in calendar mode (disabled in year/input modes)
+  * Smart keyboard event isolation (only captures events when datepicker is open)
 
 Author: Ali Amini |----> aliamini9728@gmail.com
-Version: 1.4.1 - Added performance optimizations with LRU cache
+Version: 1.5.0 - Added comprehensive keyboard navigation with day/week movement
 """
 
 import flet as ft
@@ -297,27 +306,38 @@ class PersianDatePickerConfig:
 
 
 class PersianDatePicker:
-    """A custom Persian (Jalali) date picker widget using Flet and jdatetime.
+    """A comprehensive Persian (Jalali) date picker widget using Flet and jdatetime.
 
-    This class creates a user interface for selecting Persian dates, featuring a calendar
-    view with month and year navigation, day selection, RTL (right-to-left) support,
-    and visual highlighting for default and previously selected dates.
+    This class creates a feature-rich user interface for selecting Persian dates with:
+    - Complete Persian calendar with proper Shamsi dates and Persian numerals
+    - Month and year navigation with smooth transitions and animations
+    - Floating overlay display with modal behavior and theme support
+    - Full RTL (right-to-left) support for Persian text and interface
+    - Advanced keyboard navigation (Enter, Escape, A/D for days, W/S for weeks, Arrow keys)
+    - Multiple input modes: Calendar view, Year selection, and Text input with validation
+    - Visual highlighting system for default dates, selected dates, and previously chosen dates
+    - Comprehensive customization through centralized configuration system
+    - Performance optimizations with LRU cache for date calculations
+    - Smart boundary handling and seamless month/year transitions
+    - Professional error handling with Persian error messages
     """
 
     def __init__(self, first_year=PersianDatePickerConfig.DEFAULT_FIRST_YEAR,
                  last_year=PersianDatePickerConfig.DEFAULT_LAST_YEAR,
                  default_date: Optional[jdatetime.date] = None,
                  config: Optional[PersianDatePickerConfig] = None,
-                 enable_input_mode: bool = True):
+                 enable_input_mode: bool = True,
+                 keyboard_support: bool = True):
         """
         Initialize the PersianDatePicker.
 
         Args:
-            first_year (int, optional): The starting year of the date range.
-            last_year (int, optional): The ending year of the date range.
+            first_year (int, optional): The starting year of the date range. Defaults to 1300.
+            last_year (int, optional): The ending year of the date range. Defaults to current year + 5.
             default_date (jdatetime.date, optional): The default selected date. If None, uses today's date.
-            config (PersianDatePickerConfig, optional): Custom configuration object. If None, uses default config.
-            enable_input_mode (bool, optional): Enable input mode toggle button. Default is True.
+            config (PersianDatePickerConfig, optional): Custom configuration object for styling and behavior. If None, uses default config.
+            enable_input_mode (bool, optional): Enable text input mode toggle button. Default is True.
+            keyboard_support (bool, optional): Enable keyboard navigation (Enter, Escape, A/D, W/S, Arrows). Default is True.
         """
 
         if first_year and last_year and first_year >= last_year:
@@ -328,6 +348,8 @@ class PersianDatePicker:
         self.last_year = last_year
         self.current_date = jdatetime.date.today()
         self.enable_input_mode = enable_input_mode
+        self.keyboard_support = keyboard_support
+        self.is_datepicker_open = False
 
         # Set default selected date
         if default_date:
@@ -383,6 +405,55 @@ class PersianDatePicker:
         for digit in str(num):
             result += self.persian_numerals[int(digit)]
         return result
+
+    def move_to_previous_day(self):
+        """Move to previous day, crossing month boundaries if needed"""
+        if self.selected_date.day > 1:
+            # Move within current month
+            new_day = self.selected_date.day - 1
+            self.selected_date = jdatetime.date(self.selected_date.year, self.selected_date.month, new_day)
+        else:
+            # Move to last day of previous month
+            if self.selected_date.month > 1:
+                # Previous month in same year
+                prev_month = self.selected_date.month - 1
+                prev_year = self.selected_date.year
+            else:
+                # Previous month is December of previous year
+                prev_month = 12
+                prev_year = self.selected_date.year - 1
+
+            # Check if the new year is within valid range
+            if prev_year >= self.first_year:
+                days_in_prev_month = self.get_month_days(prev_year, prev_month)
+                self.selected_date = jdatetime.date(prev_year, prev_month, days_in_prev_month)
+                self.display_year = prev_year
+                self.display_month = prev_month
+
+    def move_to_next_day(self):
+        """Move to next day, crossing month boundaries if needed"""
+        days_in_current_month = self.get_month_days(self.selected_date.year, self.selected_date.month)
+
+        if self.selected_date.day < days_in_current_month:
+            # Move within current month
+            new_day = self.selected_date.day + 1
+            self.selected_date = jdatetime.date(self.selected_date.year, self.selected_date.month, new_day)
+        else:
+            # Move to first day of next month
+            if self.selected_date.month < 12:
+                # Next month in same year
+                next_month = self.selected_date.month + 1
+                next_year = self.selected_date.year
+            else:
+                # Next month is Farvardin of next year
+                next_month = 1
+                next_year = self.selected_date.year + 1
+
+            # Check if the new year is within valid range
+            if next_year <= self.last_year:
+                self.selected_date = jdatetime.date(next_year, next_month, 1)
+                self.display_year = next_year
+                self.display_month = next_month
 
     def to_english_num(self, persian_text):
         """Convert Persian numerals to English numbers"""
@@ -669,6 +740,12 @@ class PersianDatePicker:
         """Close the floating datepicker"""
         if self.overlay_container and self.overlay_container in page.overlay:
             page.overlay.remove(self.overlay_container)
+
+            # Restore original keyboard handler if it was stored
+            if self.keyboard_support and hasattr(self, '_original_keyboard_handler'):
+                page.on_keyboard_event = self._original_keyboard_handler
+
+            self.is_datepicker_open = False
             page.update()
 
     def show(self, page: ft.Page, is_theme_light: bool = True, display_year: Optional[int] = None,
@@ -756,6 +833,7 @@ class PersianDatePicker:
         self.input_error = ""
 
         return self.create_datepicker(page, is_theme_light)
+
 
     def create_datepicker(self, page, is_theme_light: bool = True):
         """Create the complete datepicker UI as a floating overlay"""
@@ -877,6 +955,12 @@ class PersianDatePicker:
             if self.on_result_callback:
                 self.on_result_callback(date_info)
 
+            # Restore original keyboard handler (only if keyboard support is enabled)
+            if self.keyboard_support and hasattr(self,
+                                                 '_original_keyboard_handler') and self._original_keyboard_handler is not None:
+                page.on_keyboard_event = self._original_keyboard_handler
+                self.is_datepicker_open = False
+
             # Close the floating datepicker
             self.close_datepicker(page)
 
@@ -887,6 +971,12 @@ class PersianDatePicker:
             # Call callback if provided
             if self.on_result_callback:
                 self.on_result_callback(None)
+
+            # Restore original keyboard handler (only if keyboard support is enabled)
+            if self.keyboard_support and hasattr(self,
+                                                 '_original_keyboard_handler') and self._original_keyboard_handler is not None:
+                page.on_keyboard_event = self._original_keyboard_handler
+                self.is_datepicker_open = False
 
             # Close the floating datepicker
             self.close_datepicker(page)
@@ -908,7 +998,56 @@ class PersianDatePicker:
             self.result = None
             if self.on_result_callback:
                 self.on_result_callback(None)
+
+            # Restore original keyboard handler (only if keyboard support is enabled)
+            if self.keyboard_support and hasattr(self,
+                                                 '_original_keyboard_handler') and self._original_keyboard_handler is not None:
+                page.on_keyboard_event = self._original_keyboard_handler
+                self.is_datepicker_open = False
+
             self.close_datepicker(page)
+
+        # Keyboard event handling (only if keyboard support is enabled)
+        if self.keyboard_support:
+            def on_page_keyboard(e: ft.KeyboardEvent):
+                """Handle keyboard events when datepicker is open"""
+                # Only handle events if datepicker is open
+                if not self.is_datepicker_open:
+                    # Call original handler if it exists
+                    if self._original_keyboard_handler:
+                        self._original_keyboard_handler(e)
+                    return
+
+                if e.key == "Escape":
+                    on_cancel_click(e)
+                elif e.key == "Enter":
+                    on_ok_click(e)
+                elif not self.is_year_mode and not self.is_input_mode:  # Only in calendar mode
+                    if e.key == "D":
+                        # Move to previous day with month boundary crossing
+                        self.move_to_previous_day()
+                        update_calendar_view()
+                    elif e.key == "A":
+                        # Move to next day with month boundary crossing
+                        self.move_to_next_day()
+                        update_calendar_view()
+                    elif e.key == "W":
+                        # Move to previous week (W key - minus 7 days) - stay within month
+                        if self.selected_date.day > 7:
+                            new_day = self.selected_date.day - 7
+                            self.selected_date = jdatetime.date(self.selected_date.year, self.selected_date.month, new_day)
+                            update_calendar_view()
+                    elif e.key == "S":
+                        # Move to next week (S key - plus 7 days) - stay within month
+                        days_in_current_month = self.get_month_days(self.selected_date.year, self.selected_date.month)
+                        new_day = self.selected_date.day + 7
+                        if new_day <= days_in_current_month:
+                            self.selected_date = jdatetime.date(self.selected_date.year, self.selected_date.month, new_day)
+                            update_calendar_view()
+                else:
+                    # For other keys or modes, call original handler if it exists
+                    if self._original_keyboard_handler:
+                        self._original_keyboard_handler(e)
 
         # Selected date panel (right side for RTL)
         selected_date_text = ft.Text(
@@ -1324,6 +1463,15 @@ class PersianDatePicker:
             ),
             expand=True
         )
+
+        if self.keyboard_support:
+            self._original_keyboard_handler = page.on_keyboard_event
+            page.on_keyboard_event = on_page_keyboard
+            self.is_datepicker_open = True
+        else:
+            # If keyboard support is disabled, don't override page handler
+            self._original_keyboard_handler = None
+            self.is_datepicker_open = False
 
         # Add to page overlay
         page.overlay.append(self.overlay_container)
