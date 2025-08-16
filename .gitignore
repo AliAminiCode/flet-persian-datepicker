@@ -1,0 +1,33 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+env/
+venv/
+
+# Flet specific
+.flet/
+
+# macOS
+.DS_Store
+
+# IDE settings
+.idea/
+*.vscode/
+
+# Temporary files
+*.log
+*.tmp
+
+# Project-specific files (to ignore versions and version data)
+versions/
+version_data.py
