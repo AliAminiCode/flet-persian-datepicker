@@ -11,9 +11,11 @@ A customizable Persian date picker that provides:
 - Callback system for date selection
 - Default date highlighting with yellow border
 - Last selected date visual distinction
+- Button color change on mouse hover
+- Animation added on clicking the year selection button
 
 Author: Ali Amini |----> aliamini9728@gmail.com
-Version: 1.1 - Enhanced with default date highlighting
+Version: 1.2 - Added button hover color change and year selection button click animation
 """
 
 import flet as ft
@@ -71,9 +73,14 @@ class PersianDatePickerConfig:
     LIGHT_RIGHT_PANEL_BGCOLOR = "#e8e9f3"
     LIGHT_SELECTED_TEXT_COLOR = "white"
     LIGHT_DIVIDER_COLOR = ft.Colors.GREY_500
+
     # Default date highlighting colors
     LIGHT_DEFAULT_DATE_BORDER_COLOR = "#fbbf24"  # Yellow border for default date
     LIGHT_DEFAULT_DATE_BGCOLOR = "#fef3c7"  # Light yellow background for default date
+
+    # Hover colors for light theme
+    LIGHT_CELL_HOVER_COLOR = "#dbdbdb"  # Light gray hover for day cells
+    LIGHT_ACTION_BUTTONS_HOVER_COLOR = "#e5e7eb"  # Slightly darker hover for year cells
 
     # === DARK THEME COLORS ===
     DARK_PRIMARY_COLOR = "#6eabf5"
@@ -88,9 +95,14 @@ class PersianDatePickerConfig:
     DARK_RIGHT_PANEL_BGCOLOR = "#374151"
     DARK_SELECTED_TEXT_COLOR = "#111827"
     DARK_DIVIDER_COLOR = ft.Colors.GREY_600
+
     # Default date highlighting colors for dark theme
     DARK_DEFAULT_DATE_BORDER_COLOR = "#f59e0b"  # Orange-yellow border for default date
     DARK_DEFAULT_DATE_BGCOLOR = "#451a03"  # Dark yellow background for default date
+
+    # Hover colors for dark theme
+    DARK_CELL_HOVER_COLOR = "#2c3545"  # Light gray hover for day cells
+    DARK_ACTION_BUTTONS_HOVER_COLOR = "#e5e7eb"  # Slightly darker hover for year cells
 
     # === BORDER SETTINGS FOR DEFAULT DATE ===
     DEFAULT_DATE_BORDER_WIDTH = 2
@@ -169,7 +181,7 @@ class PersianDatePickerConfig:
     CANCEL_BUTTON_PADDING_V = 8
 
     # Navigation buttons
-    NAV_BUTTON_BORDER_RADIUS = 4
+    NAV_BUTTON_BORDER_RADIUS = 25
     YEAR_SELECT_BUTTON_PADDING_H = 10
     YEAR_SELECT_BUTTON_PADDING_V = 6
     YEAR_SELECT_BUTTON_BORDER_RADIUS = 6
@@ -209,7 +221,9 @@ class PersianDatePickerConfig:
                 'divider_color': self.LIGHT_DIVIDER_COLOR,
                 'text_primary_bgcolor': self.LIGHT_TEXT_PRIMARY_BGCOLOR,
                 'default_date_border_color': self.LIGHT_DEFAULT_DATE_BORDER_COLOR,
-                'default_date_bgcolor': self.LIGHT_DEFAULT_DATE_BGCOLOR
+                'default_date_bgcolor': self.LIGHT_DEFAULT_DATE_BGCOLOR,
+                'cell_hover_color': self.LIGHT_CELL_HOVER_COLOR,
+                'action_buttons_hover_color': self.LIGHT_ACTION_BUTTONS_HOVER_COLOR,
             }
         else:
             return {
@@ -226,7 +240,9 @@ class PersianDatePickerConfig:
                 'divider_color': self.DARK_DIVIDER_COLOR,
                 'text_primary_bgcolor': self.DARK_TEXT_PRIMARY_BGCOLOR,
                 'default_date_border_color': self.DARK_DEFAULT_DATE_BORDER_COLOR,
-                'default_date_bgcolor': self.DARK_DEFAULT_DATE_BGCOLOR
+                'default_date_bgcolor': self.DARK_DEFAULT_DATE_BGCOLOR,
+                'cell_hover_color': self.DARK_CELL_HOVER_COLOR,
+                'action_buttons_hover_color': self.DARK_ACTION_BUTTONS_HOVER_COLOR,
             }
 
 
@@ -251,6 +267,11 @@ class PersianDatePicker:
             default_date (jdatetime.date, optional): The default selected date. If None, uses today's date.
             config (PersianDatePickerConfig, optional): Custom configuration object. If None, uses default config.
         """
+        if first_year >= last_year:
+            raise ValueError("first_year must be less than last_year")
+        if default_date and not (first_year <= default_date.year <= last_year):
+            raise ValueError("default_date must be within the specified year range")
+
         self.config = config or PersianDatePickerConfig()
         self.first_year = first_year
         self.last_year = last_year
@@ -351,7 +372,16 @@ class PersianDatePicker:
                 date1.month == date2.month and
                 date1.day == date2.day)
 
-    def create_calendar_grid(self, on_date_click, theme_colors):
+    def handle_cell_hover(self, e, original_bg, hover_color, page):
+        """Handle hover effect for cells - only applies hover color if not already selected"""
+        if e.data == "true":  # Mouse enter
+            if original_bg is None:  # Only change if no existing background (not selected)
+                e.control.bgcolor = hover_color
+        else:  # Mouse leave
+            e.control.bgcolor = original_bg
+        page.update()
+
+    def create_calendar_grid(self, on_date_click, theme_colors, page):
         """Create the calendar grid for the current display month with enhanced date highlighting"""
         days_in_month = self.get_month_days(self.display_year, self.display_month)
         first_day_weekday = self.get_first_day_of_month(self.display_year, self.display_month)
@@ -414,7 +444,9 @@ class PersianDatePicker:
                         border=border,
                         border_radius=self.config.DAY_CELL_BORDER_RADIUS,
                         alignment=ft.alignment.center,
-                        on_click=lambda e, day=day_counter: on_date_click(day)
+                        on_click=lambda e, day=day_counter: on_date_click(day),
+                        on_hover=lambda e, original_bg=bg_color: self.handle_cell_hover(e, original_bg, theme_colors[
+                            'cell_hover_color'], page)
                     )
                     current_row.append(day_cell)
                     day_counter += 1
@@ -433,7 +465,7 @@ class PersianDatePicker:
 
         return calendar_rows
 
-    def create_year_grid(self, on_year_click, theme_colors):
+    def create_year_grid(self, on_year_click, theme_colors, page):
         """Create the year grid for year selection"""
         current_year = self.display_year
         start_year = self.first_year
@@ -450,6 +482,8 @@ class PersianDatePicker:
             for year in row_years:
                 is_selected = (year == self.display_year)
 
+                bg_color = theme_colors["text_primary_bgcolor"] if is_selected else None
+
                 year_cell = ft.Container(
                     content=ft.Text(
                         self.to_persian_num(year),
@@ -459,10 +493,13 @@ class PersianDatePicker:
                     ),
                     width=self.config.YEAR_CELL_WIDTH,
                     height=self.config.YEAR_CELL_HEIGHT,
-                    bgcolor=theme_colors["text_primary_bgcolor"] if is_selected else None,
+                    bgcolor=bg_color,
                     border_radius=self.config.YEAR_CELL_BORDER_RADIUS,
                     alignment=ft.alignment.center,
-                    on_click=lambda e, y=year: on_year_click(y)
+                    on_click=lambda e, y=year: on_year_click(y),
+                    on_hover=lambda e, original_bg=bg_color: self.handle_cell_hover(e, original_bg,
+                                                                                    theme_colors['cell_hover_color'],
+                                                                                    page)
                 )
                 year_cells.append(year_cell)
 
@@ -570,6 +607,13 @@ class PersianDatePicker:
         def on_year_select_toggle(e):
             """Handle year selection button click"""
             self.is_year_mode = not self.is_year_mode
+
+            # Rotate the dropdown icon based on mode
+            if self.is_year_mode:
+                dropdown_icon.rotate = 3.14159  # π radians = 180 degrees
+            else:
+                dropdown_icon.rotate = 0  # 0 degrees
+
             update_calendar_view()
 
         def on_year_click(year):
@@ -675,15 +719,19 @@ class PersianDatePicker:
             text_align=ft.TextAlign.RIGHT
         )
 
+        dropdown_icon = ft.Icon(
+            name=self.config.DROPDOWN_ICON,
+            color=theme_colors['text_muted'],
+            size=self.config.DROPDOWN_ICON_SIZE,
+            rotate=0,  # Initial rotation
+            animate_rotation=ft.Animation(duration=250, curve=ft.AnimationCurve.EASE_OUT_SINE)
+        )
+
         calendar_year_select_button = ft.TextButton(
             content=ft.Row(
                 controls=[
                     self.month_year_text,
-                    ft.Icon(
-                        name=self.config.DROPDOWN_ICON,
-                        color=theme_colors['text_muted'],
-                        size=self.config.DROPDOWN_ICON_SIZE
-                    )
+                    dropdown_icon
                 ],
                 spacing=5,
                 alignment=ft.MainAxisAlignment.END,
@@ -840,7 +888,7 @@ class PersianDatePicker:
                     left_panel
                 ],
                 rtl=True,
-                spacing=0
+                spacing=0,
             ),
             bgcolor=theme_colors['main_bgcolor'],
             border_radius=self.config.BORDER_RADIUS,
@@ -851,7 +899,7 @@ class PersianDatePicker:
                 offset=ft.Offset(self.config.SHADOW_OFFSET_X, self.config.SHADOW_OFFSET_Y)
             ),
             width=self.config.DATEPICKER_WIDTH + right_panel.width,
-            height=self.config.DATEPICKER_HEIGHT
+            height=self.config.DATEPICKER_HEIGHT,
         )
 
         def update_calendar_view():
@@ -862,7 +910,7 @@ class PersianDatePicker:
                 day_headers.visible = False
                 top_calendar_container_dividers.visible = True
                 bottom_calendar_container_dividers.visible = True
-                year_rows = self.create_year_grid(on_year_click, theme_colors)
+                year_rows = self.create_year_grid(on_year_click, theme_colors, page)
                 calendar_container.controls = year_rows
                 action_buttons.margin.top = self.config.ACTION_BUTTONS_MARGIN_TOP_YEAR_MODE
             else:
@@ -871,7 +919,7 @@ class PersianDatePicker:
                 day_headers.visible = True
                 top_calendar_container_dividers.visible = False
                 bottom_calendar_container_dividers.visible = False
-                calendar_rows = self.create_calendar_grid(on_date_click, theme_colors)
+                calendar_rows = self.create_calendar_grid(on_date_click, theme_colors, page)
                 calendar_container.controls = calendar_rows
                 selected_date_text.value = self.format_selected_date()
                 action_buttons.margin.top = self.config.ACTION_BUTTONS_MARGIN_TOP_NORMAL
