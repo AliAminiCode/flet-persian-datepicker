@@ -22,16 +22,17 @@ A customizable Persian date picker that provides:
 - Error handling with user-friendly Persian error messages
 - Comprehensive date range validation
 - Clean state management and mode isolation
+- Performance optimizations with LRU cache for faster date calculations
 
 Author: Ali Amini |----> aliamini9728@gmail.com
-Version: 1.4 - Added smart mode switching, input validation on mode toggle,
-               date memory control, and enhanced show methods for flexible usage
+Version: 1.4.1 - Added performance optimizations with LRU cache
 """
 
 import flet as ft
-import jdatetime
-from typing import Optional, Callable
 import re
+import jdatetime
+import functools
+from typing import Optional, Callable
 
 
 # =============================================================================
@@ -318,6 +319,7 @@ class PersianDatePicker:
             config (PersianDatePickerConfig, optional): Custom configuration object. If None, uses default config.
             enable_input_mode (bool, optional): Enable input mode toggle button. Default is True.
         """
+
         if first_year and last_year and first_year >= last_year:
             raise ValueError("first_year must be less than last_year")
 
@@ -428,8 +430,9 @@ class PersianDatePicker:
         """Format date for input field"""
         return f"{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}"
 
+    @functools.lru_cache(maxsize=128)
     def get_month_days(self, year, month):
-        """Get number of days in a Persian month"""
+        """Get number of days in a Persian month (cached for performance)"""
         if month <= 6:
             return 31
         elif month <= 11:
