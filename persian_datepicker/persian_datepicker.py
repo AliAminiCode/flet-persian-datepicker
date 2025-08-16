@@ -1,22 +1,31 @@
 # persian_datepicker.py
 """
-Persian (Shamsi/Jalali) DatePicker Widget for Flet
-
 A customizable Persian date picker that provides:
 - Persian calendar with proper Shamsi dates
-- Month and year navigation
-- Floating overlay display
-- RTL (Right-to-Left) support
+- Month and year navigation with smooth transitions
+- Floating overlay display with modal behavior
+- RTL (Right-to-Left) support for Persian text
 - Persian numerals and month names
-- Callback system for date selection
+- Callback system for date selection results
 - Default date highlighting with yellow border
 - Last selected date visual distinction
-- Button color change on mouse hover
-- Animation added on clicking the year selection button
-- Input mode for direct date entry
+- Interactive hover effects on all clickable elements
+- Smooth animations for mode transitions and year selection
+- Input mode for direct date entry with validation
+- Light and dark theme support
+- Multiple display modes: Calendar, Year selection, and Text input
+- Smart mode switching (input mode always returns to calendar mode)
+- Automatic input validation with Persian numeral support
+- Date memory control (reset to default vs. remember last selection)
+- Flexible show methods for different use cases
+- Today navigation button for quick date selection
+- Error handling with user-friendly Persian error messages
+- Comprehensive date range validation
+- Clean state management and mode isolation
 
 Author: Ali Amini |----> aliamini9728@gmail.com
-Version: 1.3 - Added input mode functionality + animation for switching between input mode and calendar mode
+Version: 1.4 - Added smart mode switching, input validation on mode toggle,
+               date memory control, and enhanced show methods for flexible usage
 """
 
 import flet as ft
@@ -38,9 +47,12 @@ class PersianDatePickerConfig:
     # === LAYOUT & DIMENSIONS ===
     # Main container
     DATEPICKER_WIDTH = 330  # Base width (right panel width will be added)
-    DATEPICKER_HEIGHT = 430
-    DATEPICKER_INPUT_HEIGHT = 530
+    DATEPICKER_CALENDAR_MODE_HEIGHT = 430
+    DATEPICKER_INPUT_MODE_HEIGHT = 250
     BORDER_RADIUS = 16
+
+    CALENDAR_CONTAINER_HEIGHT_CALENDAR_MODE = 250
+    CALENDAR_CONTAINER_HEIGHT_INPUT_MODE = 170
 
     # Right panel (date display)
     RIGHT_PANEL_WIDTH = 180
@@ -86,9 +98,10 @@ class PersianDatePickerConfig:
     LIGHT_ACTION_BUTTONS_HOVER_COLOR = "#e5e7eb"  # Slightly darker hover for year cells
 
     # Input mode colors for light theme
-    LIGHT_INPUT_BORDER_COLOR = "#d1d5db"
+    LIGHT_INPUT_COLOR = "#353638"
     LIGHT_INPUT_FOCUS_BORDER_COLOR = "#3b82f6"
     LIGHT_ERROR_TEXT_COLOR = "#dc2626"
+
 
     # === DARK THEME COLORS ===
     DARK_PRIMARY_COLOR = "#6eabf5"
@@ -113,7 +126,7 @@ class PersianDatePickerConfig:
     DARK_ACTION_BUTTONS_HOVER_COLOR = "#e5e7eb"  # Slightly darker hover for year cells
 
     # Input mode colors for dark theme
-    DARK_INPUT_BORDER_COLOR = "#4b5563"
+    DARK_INPUT_COLOR = "#e6e6e6"
     DARK_INPUT_FOCUS_BORDER_COLOR = "#6366f1"
     DARK_ERROR_TEXT_COLOR = "#f87171"
 
@@ -141,7 +154,9 @@ class PersianDatePickerConfig:
 
     # === TYPOGRAPHY ===
     # Font sizes
-    SELECTED_DATE_FONT_SIZE = 32
+    SELECTED_DATE_FONT_SIZE_CALENDAR_MODE = 32
+    SELECTED_DATE_FONT_SIZE_INPUT_MODE = 26
+
     HEADER_TEXT_FONT_SIZE = 15
     MONTH_YEAR_FONT_SIZE = 18
     DAY_CELL_FONT_SIZE = 16
@@ -168,14 +183,16 @@ class PersianDatePickerConfig:
     SELECTED_DATE_COLUMN_SPACING = 8  # Space in right panel
 
     # Margins
-    EDIT_ICON_TOP_MARGIN = 184
+    TEXT_FIELD_MARGIN_TOP = 60
+    EDIT_ICON_TOP_MARGIN_CALENDAR_MODE = 181
+    EDIT_ICON_TOP_MARGIN_INPUT_MODE = 30
     ACTION_BUTTONS_MARGIN_TOP_CALENDAR_MODE = 0
-    ACTION_BUTTONS_MARGIN_TOP_INPUT_MODE = 10
-    ACTION_BUTTONS_MARGIN_TOP_YEAR_MODE = 2116
+    ACTION_BUTTONS_MARGIN_TOP_INPUT_MODE = 0
+    ACTION_BUTTONS_MARGIN_TOP_YEAR_MODE = 26
 
     # === ICONS ===
     EDIT_ICON = ft.Icons.EDIT_OUTLINED
-    EDIT_ICON_SIZE = 22
+    EDIT_ICON_SIZE = 24
     DROPDOWN_ICON = ft.Icons.ARROW_DROP_DOWN_SHARP
     DROPDOWN_ICON_SIZE = 25
     NAV_ICON_SIZE = 22
@@ -250,7 +267,7 @@ class PersianDatePickerConfig:
                 'default_date_bgcolor': self.LIGHT_DEFAULT_DATE_BGCOLOR,
                 'cell_hover_color': self.LIGHT_CELL_HOVER_COLOR,
                 'action_buttons_hover_color': self.LIGHT_ACTION_BUTTONS_HOVER_COLOR,
-                'input_border_color': self.LIGHT_INPUT_BORDER_COLOR,
+                'input_color': self.LIGHT_INPUT_COLOR,
                 'input_focus_border_color': self.LIGHT_INPUT_FOCUS_BORDER_COLOR,
                 'error_text_color': self.LIGHT_ERROR_TEXT_COLOR,
             }
@@ -272,7 +289,7 @@ class PersianDatePickerConfig:
                 'default_date_bgcolor': self.DARK_DEFAULT_DATE_BGCOLOR,
                 'cell_hover_color': self.DARK_CELL_HOVER_COLOR,
                 'action_buttons_hover_color': self.DARK_ACTION_BUTTONS_HOVER_COLOR,
-                'input_border_color': self.DARK_INPUT_BORDER_COLOR,
+                'input_color': self.DARK_INPUT_COLOR,
                 'input_focus_border_color': self.DARK_INPUT_FOCUS_BORDER_COLOR,
                 'error_text_color': self.DARK_ERROR_TEXT_COLOR,
             }
@@ -301,10 +318,8 @@ class PersianDatePicker:
             config (PersianDatePickerConfig, optional): Custom configuration object. If None, uses default config.
             enable_input_mode (bool, optional): Enable input mode toggle button. Default is True.
         """
-        if first_year >= last_year:
+        if first_year and last_year and first_year >= last_year:
             raise ValueError("first_year must be less than last_year")
-        if default_date and not (first_year <= default_date.year <= last_year):
-            raise ValueError("default_date must be within the specified year range")
 
         self.config = config or PersianDatePickerConfig()
         self.first_year = first_year
@@ -606,11 +621,12 @@ class PersianDatePicker:
     def create_input_mode_view(self, theme_colors):
         """Create the input mode view with text field"""
         input_field = ft.TextField(
+            color=theme_colors["input_color"],
             value=self.format_date_for_input(self.selected_date),
             hint_text=self.config.INPUT_MODE_PLACEHOLDER,
             text_align=ft.TextAlign.CENTER,
             rtl=False,  # Date format is LTR
-            border_color=theme_colors["input_border_color"],
+            border_color=theme_colors["input_color"],
             focused_border_color=theme_colors["input_focus_border_color"],
             text_size=self.config.INPUT_TEXT_FONT_SIZE,
             content_padding=ft.padding.all(12),
@@ -653,54 +669,90 @@ class PersianDatePicker:
             page.update()
 
     def show(self, page: ft.Page, is_theme_light: bool = True, display_year: Optional[int] = None,
-             display_month: Optional[int] = None):
+             display_month: Optional[int] = None, reset_to_default: bool = True):
         """
         Show the Persian DatePicker as a floating overlay.
 
         Args:
             page (ft.Page): The Flet page to display the datepicker on
             is_theme_light (bool): True for light theme, False for dark theme
-            display_year (int, optional): The year to display when opening. If None, uses current display_year.
-            display_month (int, optional): The month to display when opening (1-12). If None, uses current display_month.
+            display_year (int, optional): The year to display when opening. If provided, selects first day of specified period.
+            display_month (int, optional): The month to display when opening (1-12). If provided, selects first day of specified period.
+            reset_to_default (bool): If True, resets selected_date to default_date when showing (only if no display params provided). Default is True.
 
         Returns:
             Container: The overlay container reference
+
+        Behavior:
+        - No display_year, No display_month: Show default_date (today or custom default)
+        - Only display_year: Select first day of first month (Farvardin) of given year
+        - Only display_month: Select first day of given month in current year
+        - Both display_year and display_month: Select first day of given month in given year
         """
-        # Set display year and month if provided
-        if display_year is not None:
-            self.display_year = display_year
-        if display_month is not None:
-            self.display_month = display_month
+        # Determine the target date based on provided parameters
+        current_year = jdatetime.date.today().year
+
+        if display_year is not None or display_month is not None:
+            # User provided specific year/month parameters - select first day of that period
+
+            if display_year is not None and display_month is not None:
+                # Case 3: Both year and month provided - first day of given month in given year
+                target_year = display_year
+                target_month = display_month
+            elif display_year is not None and display_month is None:
+                # Case 1: Only year provided - first day of first month (Farvardin) of given year
+                target_year = display_year
+                target_month = 1  # Farvardin (first month)
+            else:  # display_month is not None and display_year is None
+                # Case 2: Only month provided - first day of given month in current year
+                target_year = current_year
+                target_month = display_month
+
+            # Set selected date to first day of the determined period
+            self.selected_date = jdatetime.date(target_year, target_month, 1)
+            self.display_year = target_year
+            self.display_month = target_month
+
+        else:
+            # No specific year/month provided - use default behavior
+            if reset_to_default:
+                self.selected_date = self.default_date
+
+            # Navigate to selected date's month/year
+            self.display_year = self.selected_date.year
+            self.display_month = self.selected_date.month
+
+        # Reset modes to ensure clean start
+        self.is_year_mode = False
+        self.is_input_mode = False
+        self.input_error = ""
 
         return self.create_datepicker(page, is_theme_light)
 
-    def show_with_date(self, page: ft.Page, target_date: jdatetime.date, is_theme_light: bool = True):
+    def show_specific_date(self, page: ft.Page, target_date: jdatetime.date, is_theme_light: bool = True):
         """
-        Show the Persian DatePicker with a specific date displayed.
+        Show datepicker navigated to target_date's month, with target_date selected.
+        This makes target_date the new default and selects it.
 
         Args:
             page (ft.Page): The Flet page to display the datepicker on
-            target_date (jdatetime.date): The date to navigate to when opening
+            target_date (jdatetime.date): The date to select and navigate to
             is_theme_light (bool): True for light theme, False for dark theme
-
-        Returns:
-            Container: The overlay container reference
         """
-        return self.show(page, is_theme_light, display_year=target_date.year, display_month=target_date.month)
+        # Set target_date as new default and selected date
+        self.default_date = target_date
+        self.selected_date = target_date
 
-    def show_current_month(self, page: ft.Page, is_theme_light: bool = True):
-        """
-        Show the Persian DatePicker displaying the current month.
+        # Set display to show target_date's month/year
+        self.display_year = target_date.year
+        self.display_month = target_date.month
 
-        Args:
-            page (ft.Page): The Flet page to display the datepicker on
-            is_theme_light (bool): True for light theme, False for dark theme
+        # Reset modes to ensure clean start
+        self.is_year_mode = False
+        self.is_input_mode = False
+        self.input_error = ""
 
-        Returns:
-            Container: The overlay container reference
-        """
-        today = jdatetime.date.today()
-        return self.show(page, is_theme_light, display_year=today.year, display_month=today.month)
+        return self.create_datepicker(page, is_theme_light)
 
     def create_datepicker(self, page, is_theme_light: bool = True):
         """Create the complete datepicker UI as a floating overlay"""
@@ -762,17 +814,37 @@ class PersianDatePicker:
                 if mode_toggle_button:
                     mode_toggle_button.icon = self.config.CALENDAR_MODE_ICON
                     mode_toggle_button.tooltip = self.config.CALENDAR_MODE_BUTTON_TOOLTIP
-                # Reduce height for input mode
-                datepicker.height = self.config.DATEPICKER_INPUT_HEIGHT
+                datepicker.height = self.config.DATEPICKER_INPUT_MODE_HEIGHT
             else:
-                # Switching to calendar mode
+                # Switching FROM input mode - ALWAYS go to calendar mode (not year mode)
+                self.is_year_mode = False  # Force calendar mode
+
+                # Reset dropdown icon rotation to normal (not rotated)
+                dropdown_icon.rotate = 0  # Reset year button icon
+
+                # Validate and apply input date if valid
+                if hasattr(update_calendar_view, 'input_field') and update_calendar_view.input_field:
+                    input_value = update_calendar_view.input_field.value
+                    date_obj, error = self.validate_date_input(input_value)
+
+                    if date_obj:
+                        # Valid date - update everything
+                        self.selected_date = date_obj
+                        self.display_year = date_obj.year
+                        self.display_month = date_obj.month
+                        self.input_error = ""
+                    else:
+                        # Invalid date - keep current date and show error briefly
+                        self.input_error = error
+
                 if mode_toggle_button:
                     mode_toggle_button.icon = self.config.INPUT_MODE_ICON
                     mode_toggle_button.tooltip = self.config.INPUT_MODE_BUTTON_TOOLTIP
-                # Restore full height for calendar mode
-                datepicker.height = self.config.DATEPICKER_HEIGHT
-                # Reset input error
-                self.input_error = ""
+                datepicker.height = self.config.DATEPICKER_CALENDAR_MODE_HEIGHT
+
+                # Clear error when switching to calendar mode (if no validation error)
+                if not hasattr(update_calendar_view, 'input_field') or not update_calendar_view.input_field:
+                    self.input_error = ""
 
             update_calendar_view()
 
@@ -839,24 +911,69 @@ class PersianDatePicker:
         selected_date_text = ft.Text(
             self.format_selected_date(),
             color=theme_colors['text_secondary'],
-            size=self.config.SELECTED_DATE_FONT_SIZE,
+            size=self.config.SELECTED_DATE_FONT_SIZE_CALENDAR_MODE,
             weight=self.config.SELECTED_DATE_FONT_WEIGHT,
             text_align=ft.TextAlign.RIGHT
         )
 
-        # Input mode toggle button (only show if enabled)
-        mode_toggle_button = None
+        buttons_row = None
+        mode_toggle_button = None  # Initialize before creating the row
+
         if self.enable_input_mode:
+            # Create the mode toggle button separately for easier reference
             mode_toggle_button = ft.IconButton(
                 icon=self.config.INPUT_MODE_ICON,
                 icon_size=self.config.EDIT_ICON_SIZE,
-                icon_color=theme_colors['text_muted'],
+                icon_color=theme_colors['text_header'],
                 tooltip=self.config.INPUT_MODE_BUTTON_TOOLTIP,
                 on_click=on_mode_toggle,
                 style=ft.ButtonStyle(
                     shape=ft.RoundedRectangleBorder(radius=self.config.NAV_BUTTON_BORDER_RADIUS)
                 )
             )
+
+            buttons_row = ft.Row(
+                [
+                    mode_toggle_button,  # Use the variable we created
+                    ft.ElevatedButton(
+                        text=self.config.TODAY_BUTTON_TEXT,
+                        style=ft.ButtonStyle(
+                            bgcolor=theme_colors['secondary_color'],
+                            color=theme_colors['selected_text_color'],
+                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                            shape=ft.RoundedRectangleBorder(radius=8)
+                        ),
+                        on_click=on_today_click,
+                        tooltip=self.config.TODAY_BUTTON_TOOLTIP
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                spacing=8
+            )
+        else:
+            # If input mode is disabled, show only today button
+            buttons_row = ft.Row(
+                [
+                    ft.ElevatedButton(
+                        text=self.config.TODAY_BUTTON_TEXT,
+                        style=ft.ButtonStyle(
+                            bgcolor=theme_colors['secondary_color'],
+                            color=theme_colors['selected_text_color'],
+                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                            shape=ft.RoundedRectangleBorder(radius=8)
+                        ),
+                        on_click=on_today_click,
+                        tooltip=self.config.TODAY_BUTTON_TOOLTIP
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.END
+            )
+
+        action_buttons_row_control = ft.Container(
+            content=buttons_row,
+            margin=ft.margin.only(top=self.config.EDIT_ICON_TOP_MARGIN_CALENDAR_MODE),
+            alignment=ft.alignment.center_right
+        )
 
         right_panel_controls = [
             ft.Container(
@@ -870,28 +987,8 @@ class PersianDatePicker:
                 alignment=ft.alignment.center_right
             ),
             selected_date_text,
-            ft.Container(
-                content=ft.ElevatedButton(
-                    text=self.config.TODAY_BUTTON_TEXT,
-                    style=ft.ButtonStyle(
-                        bgcolor=theme_colors['secondary_color'],
-                        color=theme_colors['selected_text_color'],
-                        padding=ft.padding.symmetric(horizontal=12, vertical=6),
-                        shape=ft.RoundedRectangleBorder(radius=8)
-                    ),
-                    on_click=on_today_click,
-                    tooltip=self.config.TODAY_BUTTON_TOOLTIP
-                ),
-                margin=ft.margin.only(top=self.config.EDIT_ICON_TOP_MARGIN - (30 if mode_toggle_button else 0)),
-                alignment=ft.alignment.center_right
-            ),
+            action_buttons_row_control
         ]
-
-        if mode_toggle_button:
-            right_panel_controls.append(ft.Container(
-                content=mode_toggle_button,
-                margin=ft.margin.only(bottom=10)
-            ))
 
         right_panel = ft.Container(
             content=ft.Column(
@@ -1093,34 +1190,45 @@ class PersianDatePicker:
                 offset=ft.Offset(self.config.SHADOW_OFFSET_X, self.config.SHADOW_OFFSET_Y)
             ),
             width=self.config.DATEPICKER_WIDTH + self.config.RIGHT_PANEL_WIDTH,
-            height=self.config.DATEPICKER_HEIGHT,
+            height=self.config.DATEPICKER_CALENDAR_MODE_HEIGHT,
             animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT)
         )
 
+        # In the update_calendar_view function, find this section and update it:
         def update_calendar_view():
             """Update the calendar view based on current mode"""
             if self.is_input_mode:
                 # Show input field instead of calendar
                 nav_buttons.visible = False
                 day_headers.visible = False
+                calendar_header.visible = False
+                selected_date_text.size = self.config.SELECTED_DATE_FONT_SIZE_INPUT_MODE
+                action_buttons_row_control.margin.top = self.config.EDIT_ICON_TOP_MARGIN_INPUT_MODE
+                calendar_container.height = self.config.CALENDAR_CONTAINER_HEIGHT_INPUT_MODE
 
                 top_calendar_container_dividers.visible = False
                 bottom_calendar_container_dividers.visible = False
 
-                # Create input field
+                # Create input field - STORE THE TEXTFIELD DIRECTLY, NOT THE CONTAINER
                 input_field = ft.TextField(
+                    color=theme_colors["input_color"],
                     label=self.config.INPUT_MODE_LABEL,
+                    label_style=ft.TextStyle(
+                        color=theme_colors["input_color"],
+                    ),
                     value=self.format_date_for_input(self.selected_date),
                     hint_text=self.config.INPUT_MODE_PLACEHOLDER,
-                    text_align=ft.TextAlign.CENTER,
+                    text_align=ft.TextAlign.RIGHT,
                     rtl=False,  # Date format is LTR
-                    border_color=theme_colors["input_border_color"] if "input_border_color" in theme_colors else
-                    theme_colors["text_muted"],
-                    focused_border_color=theme_colors[
-                        "input_focus_border_color"] if "input_focus_border_color" in theme_colors else theme_colors[
-                        "secondary_color"],
-                    text_size=self.config.INPUT_TEXT_FONT_SIZE if hasattr(self.config, 'INPUT_TEXT_FONT_SIZE') else 16,
+                    border_color=theme_colors.get("input_color", theme_colors["text_muted"]),
+                    focused_border_color=theme_colors.get("input_focus_border_color", theme_colors["secondary_color"]),
+                    text_size=getattr(self.config, 'INPUT_TEXT_FONT_SIZE', 16),
                     content_padding=ft.padding.all(12),
+                )
+
+                input_container = ft.Container(
+                    content=input_field,
+                    margin=ft.margin.only(top=self.config.TEXT_FIELD_MARGIN_TOP)
                 )
 
                 error_text = ft.Text(
@@ -1131,9 +1239,9 @@ class PersianDatePicker:
                     text_align=ft.TextAlign.CENTER
                 )
 
-                input_container = ft.Column(
+                main_input_container = ft.Column(
                     [
-                        input_field,
+                        input_container,
                         error_text
                     ],
                     spacing=10,
@@ -1141,32 +1249,43 @@ class PersianDatePicker:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
                 )
 
-                calendar_container.controls = [input_container]
+                calendar_container.controls = [main_input_container]
 
-                # Store references for OK button validation
-                update_calendar_view.input_field = input_field
+                # Store references for OK button validation - NOW STORING THE TEXTFIELD OBJECT
+                update_calendar_view.input_field = input_field  # This is now the TextField, not Container
                 update_calendar_view.error_text = error_text
 
                 # Ensure input mode height
-                datepicker.height = self.config.DATEPICKER_INPUT_HEIGHT
+                datepicker.height = self.config.DATEPICKER_INPUT_MODE_HEIGHT
                 action_buttons.margin.top = self.config.ACTION_BUTTONS_MARGIN_TOP_INPUT_MODE
 
             elif self.is_year_mode:
                 # Hide navigation buttons and day headers, show year grid
                 nav_buttons.visible = False
                 day_headers.visible = False
+                calendar_header.visible = True
+                selected_date_text.size = self.config.SELECTED_DATE_FONT_SIZE_CALENDAR_MODE
+                action_buttons_row_control.margin.top = self.config.EDIT_ICON_TOP_MARGIN_CALENDAR_MODE
+                calendar_container.height = self.config.CALENDAR_CONTAINER_HEIGHT_INPUT_MODE
+
                 top_calendar_container_dividers.visible = True
                 bottom_calendar_container_dividers.visible = True
                 year_rows = self.create_year_grid(on_year_click, theme_colors, page)
                 calendar_container.controls = year_rows
                 action_buttons.margin.top = self.config.ACTION_BUTTONS_MARGIN_TOP_YEAR_MODE
                 # Ensure full height for year mode
-                datepicker.height = self.config.DATEPICKER_HEIGHT
+                datepicker.height = self.config.DATEPICKER_CALENDAR_MODE_HEIGHT
+                calendar_container.height = self.config.CALENDAR_CONTAINER_HEIGHT_CALENDAR_MODE
 
             else:
                 # Show navigation buttons and day headers, show calendar grid
                 nav_buttons.visible = True
                 day_headers.visible = True
+                calendar_header.visible = True
+                selected_date_text.size = self.config.SELECTED_DATE_FONT_SIZE_CALENDAR_MODE
+                action_buttons_row_control.margin.top = self.config.EDIT_ICON_TOP_MARGIN_CALENDAR_MODE
+                calendar_container.height = self.config.CALENDAR_CONTAINER_HEIGHT_CALENDAR_MODE
+
                 top_calendar_container_dividers.visible = False
                 bottom_calendar_container_dividers.visible = False
                 calendar_rows = self.create_calendar_grid(on_date_click, theme_colors, page)
@@ -1174,7 +1293,7 @@ class PersianDatePicker:
                 selected_date_text.value = self.format_selected_date()
                 action_buttons.margin.top = self.config.ACTION_BUTTONS_MARGIN_TOP_CALENDAR_MODE
                 # Ensure full height for calendar mode
-                datepicker.height = self.config.DATEPICKER_HEIGHT
+                datepicker.height = self.config.DATEPICKER_CALENDAR_MODE_HEIGHT
 
             self.month_year_text.value = f"{self.persian_months[self.display_month - 1]} {self.to_persian_num(self.display_year)}"
             page.update()
