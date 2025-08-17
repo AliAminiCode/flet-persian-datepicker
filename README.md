@@ -14,6 +14,9 @@ Install the package via pip:
 pip install persian-datepicker
 ```
 
+## Current Version
+v1.5 (See [Changelog](https://github.com/AliAminiCode/persian-datepicker/blob/master/CHANGELOG.md))
+
 ## Quick Start
 Here’s a simple example to get you started with the Persian DatePicker:
 
@@ -39,6 +42,11 @@ ft.app(target=main)
 ```
 Run this code after installing the package to see a basic datepicker with a button to open it. The selected date will be printed in Persian format.
 
+## Advanced Usage
+
+- Customize themes or add date range validation (see example_mini_project.py).
+- Use `datepicker.set_default_date("1404/06/01")` to set a default date.
+
 ## Screenshots
 Check out the Persian DatePicker in action with light and dark themes:
 
@@ -61,6 +69,9 @@ Check the `examples/` directory for sample code:
 
 ## Changelog
 See [CHANGELOG.md](https://github.com/AliAminiCode/persian-datepicker/blob/master/CHANGELOG.md) for detailed version history.
+
+## Reporting Issues
+Found a bug? Report it [here](https://github.com/AliAminiCode/persian-datepicker/issues).
 
 ## License
 This project is licensed under the [MIT License](https://github.com/AliAminiCode/persian-datepicker/blob/master/LICENSE).  
