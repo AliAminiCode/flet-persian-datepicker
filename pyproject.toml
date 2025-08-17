@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "persian-datepicker"
-version = "1.5.2"
+version = "1.5.3"
 description = "A Persian (Shamsi) DatePicker widget for Flet with animations, RTL support, and keyboard navigation."
 readme = "README.md"
 authors = [{ name = "Ali Amini", email = "aliamini9728@gmail.com" }]
@@ -29,3 +29,6 @@ requires-python = ">=3.7"
 where = ["."]
 include = ["persian_datepicker*"]
 exclude = ["versions*", "screenshots*"]
+
+[tool.setuptools.package-data]
+persian_datepicker = ["*.py"]
