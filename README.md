@@ -1,12 +1,14 @@
-# Persian DatePicker
+# Flet Persian DatePicker
 
-A cutting-edge Persian (Shamsi) DatePicker widget for Flet, launched in 2025! This widget brings seamless navigation, stunning animations, and full RTL support with Persian numerals to your applications. Perfect for modern Persian apps, it includes:
+**Flet Persian DatePicker: Advanced Shamsi/Jalali Date Widget (2025 Release)**  
+Discover a cutting-edge Persian (Shamsi) DatePicker widget designed for Flet, launched in 2025! This powerful Flet Persian DatePicker offers seamless navigation, stunning animations, and full RTL support with Persian numerals, making it ideal for modern Persian apps. Key features include:
 
-- **Smooth Navigation**: Month and year transitions with animations.
-- **Keyboard Support**: Navigate with Escape (close), Enter (confirm), A/D (days), W/S (weeks).
-- **Themes**: Light and dark mode support.
-- **Input Mode**: Direct date entry with validation.
-- **Smart Features**: Mode switching, date memory, and today button.
+- **Keyboard Navigation**: Effortlessly navigate with Escape (close), Enter (confirm), A/D (previous/next day), and W/S (previous/next week).
+- **Flexible Themes**: Switch between light and dark modes for a tailored user experience.
+- **Input Mode with Validation**: Enter dates directly with smart validation for accuracy.
+- **Smart Features**: Enjoy mode switching, date memory, and a dedicated today button.
+
+Perfect for developers seeking a robust Jalali Calendar solution or a Shamsi Date Widget for Flet projects. Explore more at [https://github.com/AliAminiCode/flet-persian-datepicker](https://github.com/AliAminiCode/flet-persian-datepicker).
 
 ## Installation
 Install the package via pip:
@@ -15,7 +17,7 @@ pip install persian-datepicker
 ```
 
 ## Current Version
-v1.5 (See [Changelog](https://github.com/AliAminiCode/persian-datepicker/blob/master/CHANGELOG.md))
+v1.5 (See [Changelog](https://github.com/AliAminiCode/flet-persian-datepicker/blob/master/CHANGELOG.md))
 
 ## Quick Start
 Here’s a simple example to get you started with the Persian DatePicker:
@@ -44,17 +46,18 @@ Run this code after installing the package to see a basic datepicker with a butt
 
 ## Advanced Usage
 
-- Customize themes or add date range validation (see example_mini_project.py).
-- Use `datepicker.set_default_date("1404/06/01")` to set a default date.
+- Customize themes: page.theme_mode = ft.ThemeMode.DARK before showing the datepicker.
+- Set default date: datepicker.set_default_date("1404/06/01").
+- Validate date range: Check example_mini_project.py for advanced usage.
 
 ## Screenshots
 Check out the Persian DatePicker in action with light and dark themes:
 
 - **Light Mode:**  
-  ![Light Mode](screenshots/light_mode_landscape.png)
+<img src="screenshots/light_mode_landscape.png" alt="Light Mode">
 
 - **Dark Mode:**  
-  ![Dark Mode](screenshots/dark_mode_landscape.png)
+<img src="screenshots/dark_mode_landscape.png" alt="Dark Mode">
 
 ## Usage
 Check the `examples/` directory for sample code:
@@ -68,14 +71,15 @@ Check the `examples/` directory for sample code:
 - Performance optimized with LRU cache.
 
 ## Changelog
-See [CHANGELOG.md](https://github.com/AliAminiCode/persian-datepicker/blob/master/CHANGELOG.md) for detailed version history.
+See [CHANGELOG.md](https://github.com/AliAminiCode/flet-persian-datepicker/blob/master/CHANGELOG.md) for detailed version history.
 
 ## Reporting Issues
-Found a bug? Report it [here](https://github.com/AliAminiCode/persian-datepicker/issues).
+Found a bug? Report it [here](https://github.com/AliAminiCode/flet-persian-datepicker/issues).
 
 ## License
-This project is licensed under the [MIT License](https://github.com/AliAminiCode/persian-datepicker/blob/master/LICENSE).  
+This project is licensed under the [MIT License](https://github.com/AliAminiCode/flet-persian-datepicker/blob/master/LICENSE).  
 Developed by [Ali Amini](mailto:aliamini9728@gmail.com).
 
 ## Contribute
-Feel free to open issues or pull requests on [GitHub](https://github.com/AliAminiCode/persian-datepicker).
+Feel free to open issues or pull requests on [GitHub](https://github.com/AliAminiCode/flet-persian-datepicker).
+Note: This repository was previously named persian-datepicker. Update your bookmarks to https://github.com/AliAminiCode/flet-persian-datepicker!
