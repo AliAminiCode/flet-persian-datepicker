@@ -33,7 +33,7 @@ A customizable Persian date picker that provides:
   * Keyboard events only active in calendar mode (disabled in year/input modes)
   * Smart keyboard event isolation (only captures events when datepicker is open)
 
-Author: Ali Amini |----> aliamini9728@gmail.com
+Author: Ali Amini |----> GitHub: https://github.com/AliAminiCode
 Version: 1.5.0 - Added comprehensive keyboard navigation with day/week movement
 """
 
