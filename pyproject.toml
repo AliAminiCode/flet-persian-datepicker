@@ -29,6 +29,9 @@ dependencies = [
 ]
 requires-python = ">=3.7"
 
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
 [project.urls]
 "Homepage" = "https://github.com/AliAminiCode/flet-persian-datepicker"
 "Bug Tracker" = "https://github.com/AliAminiCode/flet-persian-datepicker/issues"
@@ -40,3 +43,6 @@ exclude = ["versions*", "screenshots*"]
 
 [tool.setuptools.package-data]
 persian_datepicker = ["*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
