@@ -7,7 +7,7 @@ Run this file to see different ways to use the datepicker.
 
 import flet as ft
 import jdatetime
-from persian_datepicker_project.persian_datepicker import PersianDatePicker
+from persian_datepicker import PersianDatePicker
 
 
 def main(page: ft.Page):

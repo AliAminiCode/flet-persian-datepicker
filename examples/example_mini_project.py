@@ -7,7 +7,7 @@ Users can add events with Persian dates and view them in a list.
 
 import flet as ft
 import jdatetime
-from persian_datepicker_project.persian_datepicker import PersianDatePicker
+from persian_datepicker import PersianDatePicker
 
 
 def main(page: ft.Page):
