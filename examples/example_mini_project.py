@@ -41,7 +41,6 @@ def main(page: ft.Page):
         else:
             selected_date = None
             selected_date_text.value = "تاریخی انتخاب نشده"
-        page.update()
 
     def show_datepicker(e):
         """Show date picker"""
@@ -72,7 +71,6 @@ def main(page: ft.Page):
         update_events_list()
         event_title.value = ""
         selected_date_text.value = "تاریخی انتخاب نشده"
-        page.update()
 
         show_snackbar("رویداد اضافه شد! ✅")
 
@@ -134,17 +132,13 @@ def main(page: ft.Page):
                     padding=15,
                     bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.BLUE),
                     border_radius=10,
-                    border=ft.border.all(1, ft.Colors.with_opacity(0.2, ft.Colors.BLUE))
+                    border=ft.Border.all(1, ft.Colors.with_opacity(0.2, ft.Colors.BLUE))
                 )
                 events_list.controls.append(event_card)
 
-        page.update()
-
     def show_snackbar(message):
         """Show snackbar message"""
-        page.snack_bar = ft.SnackBar(ft.Text(message))
-        page.snack_bar.open = True
-        page.update()
+        page.show_dialog(ft.SnackBar(ft.Text(message)))
 
     # Initial events list
     update_events_list()
@@ -168,7 +162,7 @@ def main(page: ft.Page):
                     event_title,
 
                     ft.Row([
-                        ft.ElevatedButton(
+                        ft.Button(
                             "انتخاب تاریخ",
                             icon=ft.Icons.CALENDAR_TODAY,
                             on_click=show_datepicker
@@ -176,7 +170,7 @@ def main(page: ft.Page):
                         selected_date_text,
                     ], spacing=15),
 
-                    ft.ElevatedButton(
+                    ft.Button(
                         "افزودن رویداد",
                         icon=ft.Icons.ADD,
                         style=ft.ButtonStyle(
@@ -189,7 +183,7 @@ def main(page: ft.Page):
                 padding=20,
                 bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.GREEN),
                 border_radius=15,
-                margin=ft.margin.only(bottom=20)
+                margin=ft.Margin.only(bottom=20)
             ),
 
             # Events list
@@ -207,4 +201,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)

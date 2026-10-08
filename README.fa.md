@@ -17,6 +17,16 @@
 ```bash
 pip install persian-datepicker
 ```
+نیازمند **Python 3.10+** و **Flet 1.0+** است (`pip install "flet>=1.0.1,<2"`).
+
+> ### ⚠️ سازگاری با نسخه Flet
+> نسخه **2.0.0 و بالاتر** این کتابخانه برای **Flet 1.x** (نسخه 1.0.1 به بالا) ساخته شده است و روی **Flet 0.x** کار نمی‌کند، چون Flet 1.0 بسیاری از API‌ها را تغییر نام داده یا حذف کرده است.
+>
+> اگر پروژه شما هنوز روی **نسخه قدیمی Flet** (0.28.x یا قدیمی‌تر) است، لطفاً یک **نسخه قدیمی‌تر از این کتابخانه** را نصب کنید که با همان نسخه Flet هماهنگ است:
+> ```bash
+> pip install "persian-datepicker<2" "flet<1"
+> ```
+> به‌طور خلاصه: **Flet جدید ← کتابخانه 2.x**، **Flet قدیمی ← کتابخانه 1.x**.
 
 ## شروع سریع
 ```python
@@ -35,9 +45,9 @@ def main(page: ft.Page):
     def show_datepicker(e):
         datepicker.show(page)
 
-    page.add(ft.ElevatedButton("Select Date", on_click=show_datepicker))
+    page.add(ft.Button("Select Date", on_click=show_datepicker))
 
-ft.app(target=main)
+ft.run(main)
 ```
 این کد را پس از نصب پکیج اجرا کنید تا یک انتخاب‌گر تاریخ ساده به همراه دکمه‌ای برای باز کردن آن ببینید. تاریخ انتخاب‌شده به فرمت فارسی چاپ می‌شود.
 

@@ -27,7 +27,6 @@ def main(page: ft.Page):
             result_text.value = f"📅 تاریخ انتخابی: {result['formatted_persian']} ({result['day_name']})"
         else:
             result_text.value = "❌ انتخاب لغو شد"
-        page.update()
 
     # Example 1: Simple datepicker
     def show_simple(e):
@@ -91,20 +90,20 @@ def main(page: ft.Page):
 
             # Buttons
             ft.Row([
-                ft.ElevatedButton("Simple", on_click=show_simple, width=120),
-                ft.ElevatedButton("Date Range", on_click=show_custom_range, width=120),
-                ft.ElevatedButton("With Default", on_click=show_with_default, width=120),
+                ft.Button("Simple", on_click=show_simple, width=120),
+                ft.Button("Date Range", on_click=show_custom_range, width=120),
+                ft.Button("With Default", on_click=show_with_default, width=120),
             ], alignment=ft.MainAxisAlignment.CENTER),
 
             ft.Row([
-                ft.ElevatedButton("Dark Theme", on_click=show_dark_theme, width=120),
-                ft.ElevatedButton("Specific Month", on_click=show_specific_month, width=120),
-                ft.ElevatedButton("No Input Mode", on_click=show_no_input, width=120),
+                ft.Button("Dark Theme", on_click=show_dark_theme, width=120),
+                ft.Button("Specific Month", on_click=show_specific_month, width=120),
+                ft.Button("No Input Mode", on_click=show_no_input, width=120),
             ], alignment=ft.MainAxisAlignment.CENTER),
 
             ft.Row([
-                ft.ElevatedButton("No Keyboard", on_click=show_no_keyboard, width=120),
-                ft.ElevatedButton("Minimal Mode", on_click=show_minimal, width=120),
+                ft.Button("No Keyboard", on_click=show_no_keyboard, width=120),
+                ft.Button("Minimal Mode", on_click=show_minimal, width=120),
             ], alignment=ft.MainAxisAlignment.CENTER),
 
             ft.Divider(),
@@ -117,4 +116,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)

@@ -34,7 +34,7 @@ A customizable Persian date picker that provides:
   * Smart keyboard event isolation (only captures events when datepicker is open)
 
 Author: Ali Amini |----> GitHub: https://github.com/AliAminiCode
-Version: 1.5.0 - Added comprehensive keyboard navigation with day/week movement
+Version: 2.0.0 - Migrated to Flet 1.0.1 APIs
 """
 
 import flet as ft
@@ -546,10 +546,11 @@ class PersianDatePicker:
 
     def handle_cell_hover(self, e, original_bg, hover_color, page):
         """Handle hover effect for cells - only applies hover color if not already selected"""
-        if e.data == "true":  # Mouse enter
+        entered = e.data is True or e.data == "true"
+        if entered:
             if original_bg is None:  # Only change if no existing background (not selected)
                 e.control.bgcolor = hover_color
-        else:  # Mouse leave
+        else:
             e.control.bgcolor = original_bg
         page.update()
 
@@ -594,7 +595,7 @@ class PersianDatePicker:
                         # Default date - yellow border and light background
                         text_color = theme_colors["text_primary"]
                         bg_color = theme_colors["default_date_bgcolor"]
-                        border = ft.border.all(
+                        border = ft.Border.all(
                             width=self.config.DEFAULT_DATE_BORDER_WIDTH,
                             color=theme_colors["default_date_border_color"]
                         )
@@ -615,7 +616,7 @@ class PersianDatePicker:
                         bgcolor=bg_color,
                         border=border,
                         border_radius=self.config.DAY_CELL_BORDER_RADIUS,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment.CENTER,
                         on_click=lambda e, day=day_counter: on_date_click(day),
                         on_hover=lambda e, original_bg=bg_color: self.handle_cell_hover(e, original_bg, theme_colors[
                             'cell_hover_color'], page)
@@ -667,7 +668,7 @@ class PersianDatePicker:
                     height=self.config.YEAR_CELL_HEIGHT,
                     bgcolor=bg_color,
                     border_radius=self.config.YEAR_CELL_BORDER_RADIUS,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment.CENTER,
                     on_click=lambda e, y=year: on_year_click(y),
                     on_hover=lambda e, original_bg=bg_color: self.handle_cell_hover(e, original_bg,
                                                                                     theme_colors['cell_hover_color'],
@@ -703,7 +704,7 @@ class PersianDatePicker:
             border_color=theme_colors["input_color"],
             focused_border_color=theme_colors["input_focus_border_color"],
             text_size=self.config.INPUT_TEXT_FONT_SIZE,
-            content_padding=ft.padding.all(12),
+            content_padding=ft.Padding.all(12),
         )
 
         error_text = ft.Text(
@@ -723,7 +724,7 @@ class PersianDatePicker:
                         size=self.config.HEADER_TEXT_FONT_SIZE,
                         text_align=ft.TextAlign.CENTER
                     ),
-                    margin=ft.margin.only(bottom=20)
+                    margin=ft.Margin.only(bottom=20)
                 ),
                 input_field,
                 error_text
@@ -1077,12 +1078,12 @@ class PersianDatePicker:
             buttons_row = ft.Row(
                 [
                     mode_toggle_button,  # Use the variable we created
-                    ft.ElevatedButton(
-                        text=self.config.TODAY_BUTTON_TEXT,
+                    ft.Button(
+                        content=self.config.TODAY_BUTTON_TEXT,
                         style=ft.ButtonStyle(
                             bgcolor=theme_colors['secondary_color'],
                             color=theme_colors['selected_text_color'],
-                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
                             shape=ft.RoundedRectangleBorder(radius=8)
                         ),
                         on_click=on_today_click,
@@ -1096,12 +1097,12 @@ class PersianDatePicker:
             # If input mode is disabled, show only today button
             buttons_row = ft.Row(
                 [
-                    ft.ElevatedButton(
-                        text=self.config.TODAY_BUTTON_TEXT,
+                    ft.Button(
+                        content=self.config.TODAY_BUTTON_TEXT,
                         style=ft.ButtonStyle(
                             bgcolor=theme_colors['secondary_color'],
                             color=theme_colors['selected_text_color'],
-                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
                             shape=ft.RoundedRectangleBorder(radius=8)
                         ),
                         on_click=on_today_click,
@@ -1113,8 +1114,8 @@ class PersianDatePicker:
 
         action_buttons_row_control = ft.Container(
             content=buttons_row,
-            margin=ft.margin.only(top=self.config.EDIT_ICON_TOP_MARGIN_CALENDAR_MODE),
-            alignment=ft.alignment.center_right
+            margin=ft.Margin.only(top=self.config.EDIT_ICON_TOP_MARGIN_CALENDAR_MODE),
+            alignment=ft.Alignment.CENTER_RIGHT
         )
 
         right_panel_controls = [
@@ -1126,7 +1127,7 @@ class PersianDatePicker:
                     weight=self.config.HEADER_FONT_WEIGHT,
                     text_align=ft.TextAlign.RIGHT
                 ),
-                alignment=ft.alignment.center_right
+                alignment=ft.Alignment.CENTER_RIGHT
             ),
             selected_date_text,
             action_buttons_row_control
@@ -1153,7 +1154,7 @@ class PersianDatePicker:
         )
 
         dropdown_icon = ft.Icon(
-            name=self.config.DROPDOWN_ICON,
+            icon=self.config.DROPDOWN_ICON,
             color=theme_colors['text_muted'],
             size=self.config.DROPDOWN_ICON_SIZE,
             rotate=0,  # Initial rotation
@@ -1171,7 +1172,7 @@ class PersianDatePicker:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
             style=ft.ButtonStyle(
-                padding=ft.padding.symmetric(
+                padding=ft.Padding.symmetric(
                     horizontal=self.config.YEAR_SELECT_BUTTON_PADDING_H,
                     vertical=self.config.YEAR_SELECT_BUTTON_PADDING_V
                 ),
@@ -1233,7 +1234,7 @@ class PersianDatePicker:
                     ),
                     width=self.config.DAY_CELL_WIDTH,
                     height=self.config.DAY_CELL_HEIGHT,
-                    alignment=ft.alignment.center
+                    alignment=ft.Alignment.CENTER
                 )
                 for day in self.persian_day_abbr
             ],
@@ -1253,12 +1254,12 @@ class PersianDatePicker:
             ft.Container(
                 ft.Row(
                     [
-                        ft.ElevatedButton(
+                        ft.Button(
                             self.config.OK_BUTTON_TEXT,
                             style=ft.ButtonStyle(
                                 bgcolor=theme_colors['secondary_color'],
                                 color=theme_colors['selected_text_color'],
-                                padding=ft.padding.symmetric(
+                                padding=ft.Padding.symmetric(
                                     horizontal=self.config.OK_BUTTON_PADDING_H,
                                     vertical=self.config.OK_BUTTON_PADDING_V
                                 )
@@ -1269,7 +1270,7 @@ class PersianDatePicker:
                             self.config.CANCEL_BUTTON_TEXT,
                             style=ft.ButtonStyle(
                                 color=theme_colors['secondary_color'],
-                                padding=ft.padding.symmetric(
+                                padding=ft.Padding.symmetric(
                                     horizontal=self.config.CANCEL_BUTTON_PADDING_H,
                                     vertical=self.config.CANCEL_BUTTON_PADDING_V
                                 )
@@ -1280,7 +1281,7 @@ class PersianDatePicker:
                     alignment=ft.MainAxisAlignment.START,
                     spacing=self.config.BUTTON_ROW_SPACING
                 ),
-                margin=ft.margin.only(top=self.config.ACTION_BUTTONS_MARGIN_TOP_CALENDAR_MODE)
+                margin=ft.Margin.only(top=self.config.ACTION_BUTTONS_MARGIN_TOP_CALENDAR_MODE)
             )
         )
 
@@ -1308,7 +1309,7 @@ class PersianDatePicker:
                 ],
                 spacing=self.config.MAIN_COLUMN_SPACING
             ),
-            padding=ft.padding.all(self.config.LEFT_PANEL_PADDING),
+            padding=ft.Padding.all(self.config.LEFT_PANEL_PADDING),
             expand=True
         )
 
@@ -1365,12 +1366,12 @@ class PersianDatePicker:
                     border_color=theme_colors.get("input_color", theme_colors["text_muted"]),
                     focused_border_color=theme_colors.get("input_focus_border_color", theme_colors["secondary_color"]),
                     text_size=getattr(self.config, 'INPUT_TEXT_FONT_SIZE', 16),
-                    content_padding=ft.padding.all(12),
+                    content_padding=ft.Padding.all(12),
                 )
 
                 input_container = ft.Container(
                     content=input_field,
-                    margin=ft.margin.only(top=self.config.TEXT_FIELD_MARGIN_TOP)
+                    margin=ft.Margin.only(top=self.config.TEXT_FIELD_MARGIN_TOP)
                 )
 
                 error_text = ft.Text(
@@ -1456,7 +1457,7 @@ class PersianDatePicker:
                     # Centered datepicker
                     ft.Container(
                         content=datepicker,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment.CENTER,
                         expand=True
                     )
                 ]

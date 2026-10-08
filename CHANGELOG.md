@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## **[2.0.0]** - Flet 1.0 migration
+- **Breaking:** the package now targets **Flet 1.0.1+** (`flet>=1.0.1,<2.0`); Flet 0.x is no longer supported
+- **Breaking:** requires **Python 3.10+** (Flet 1.0's minimum)
+- Migrated to the renamed Flet 1.0 APIs:
+  - `ft.ElevatedButton` → `ft.Button`, button `text=` → `content=`
+  - `ft.Icon(name=...)` → `ft.Icon(icon=...)`
+  - lowercase helpers → classmethods: `ft.padding/margin/border/alignment.*` → `ft.Padding/Margin/Border/Alignment.*`
+- Updated hover handling for Flet 1.0's truthy hover event payloads (legacy `"true"/"false"` strings still accepted)
+- Examples and READMEs updated to `ft.run(main)` (replacing removed `ft.app(target=...)`) and `page.show_dialog(...)` for SnackBars
+- **No public API or behaviour changes**: `PersianDatePicker(...)`, `show()`, `show_specific_date()`, `close_datepicker()`, `set_result_callback()` and all Persian calendar logic, styling, and keyboard navigation are unchanged
+
 ## **[1.5.0]**
 - Added comprehensive keyboard navigation support:
   - **Escape key:** Cancel/close datepicker
