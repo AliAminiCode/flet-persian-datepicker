@@ -2,33 +2,40 @@
 
 🇬🇧 English · [🇮🇷 فارسی](README.fa.md)
 
-A Persian (Jalali/Shamsi) date picker widget for [Flet](https://flet.dev), built from scratch to match the look and feel of Flet's built-in `DatePicker` while adding full Persian calendar and RTL support.
+A Persian (Jalali/Shamsi) date picker for [Flet](https://flet.dev) 1.x. Flet's built-in `DatePicker` shows only the Gregorian calendar with English text. This package adds a Jalali calendar with Persian month and day names, Persian numerals and an RTL layout, styled to look like the built-in picker.
 
-## Overview
-Flet's built-in `DatePicker` only supports the Gregorian calendar and English text, which makes it unsuitable for Persian-speaking users. This package provides a drop-in alternative with a similar API, built entirely on top of Flet's existing widgets. Key features:
-- **Jalali calendar support**: correct leap-year handling, Persian month and day names, Persian numerals.
-- **Keyboard navigation**: Enter to confirm, Escape to cancel, day/week movement, all disabled automatically while typing in input mode.
-- **Input mode with validation**: type a date directly (Persian or English numerals) with format and range checking.
-- **Light/dark themes** and a configurable year range.
-- Built entirely with Flet's existing widgets, no external UI dependencies.
+## Features
+
+- **Jalali calendar**: Persian month and day names, Persian numerals, RTL layout.
+- **Two modes**: pick from the calendar, or type a date directly (Persian or English digits). Typed dates are checked for format and range, and errors are shown in Persian.
+- **Keyboard navigation**: confirm, cancel and move between days and weeks (see [Keyboard shortcuts](#keyboard-shortcuts)).
+- **Today button** and highlighting of the default date and the last selected date.
+- **Light and dark themes**, configurable year range.
+- **Small footprint**: the only dependencies are `flet` and `jdatetime`.
+
+### How it differs from `ft.DatePicker`
+
+The look and feel follow Flet's built-in picker, but the API is its own: you create a `PersianDatePicker`, register a result callback, and call `show(page)`. It is not a drop-in replacement for `ft.DatePicker`, so existing code needs small changes when you switch.
 
 ## Installation
-Install the package via pip:
+
 ```bash
 pip install persian-datepicker
 ```
-Requires **Python 3.10+** and **Flet 1.0+** (`pip install "flet>=1.0.1,<2"`).
 
-> ### ⚠️ Flet version compatibility
-> Version **2.0.0 and newer** of this library is built for **Flet 1.x** (Flet 1.0.1+). It will **not** work with Flet 0.x, because Flet 1.0 renamed and removed many APIs.
->
-> If your project is still on an **older Flet** release (0.28.x or earlier), please install an **older version of this library**, which is pinned to the matching Flet line:
-> ```bash
-> pip install "persian-datepicker<2" "flet<1"
-> ```
-> In short: **new Flet → this library 2.x**, **old Flet → this library 1.x**.
+Requires **Python 3.10+** and **Flet 1.0.1+**.
+
+### Version compatibility
+
+| Library version | Flet version | Install |
+|---|---|---|
+| 2.x | 1.0.1 or newer (below 2.0) | `pip install persian-datepicker` |
+| 1.x | 0.28.x or older | `pip install "persian-datepicker<2" "flet<1"` |
+
+Flet 1.0 renamed and removed many APIs, so version 2.0.0 and newer will not run on Flet 0.x. See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## Quick Start
+
 ```python
 import flet as ft
 from persian_datepicker import PersianDatePicker
@@ -49,44 +56,70 @@ def main(page: ft.Page):
 
 ft.run(main)
 ```
-Run this after installing the package to see a basic datepicker with a button to open it. The selected date is printed in Persian format.
 
-## Advanced Usage
-- Set a custom year range: `PersianDatePicker(first_year=1400, last_year=1410)`.
-- Set a default date: `datepicker.set_default_date(jdatetime.date(1404, 6, 1))` — this takes a `jdatetime.date` object, not a string.
-- Open to a specific month/year: `datepicker.show(page, display_year=1403, display_month=6)`.
-- Disable input mode or keyboard support: `PersianDatePicker(enable_input_mode=False, keyboard_support=False)`.
+Clicking the button opens the picker. When a date is confirmed, the callback receives a result dictionary; `result['formatted_persian']` holds the date formatted in Persian.
 
-See `examples/example_basic.py` for all of the options above, and `examples/example_mini_project.py` for a small event-planner app built with the widget.
+<!-- TODO: list every key of the result dictionary (e.g. what the Gregorian value and the date object are called) with a one-line description each. -->
+
+## Usage
+
+| What you want | How |
+|---|---|
+| Limit the selectable years | `PersianDatePicker(first_year=1400, last_year=1410)` |
+| Start from a given date | `datepicker.set_default_date(jdatetime.date(1404, 6, 1))` (takes a `jdatetime.date`, not a string) |
+| Open on a specific month | `datepicker.show(page, display_year=1403, display_month=6)` |
+| Turn off typed input | `PersianDatePicker(enable_input_mode=False)` |
+| Turn off keyboard shortcuts | `PersianDatePicker(keyboard_support=False)` |
+
+Runnable examples:
+
+- `examples/example_basic.py`: every option above.
+- `examples/example_mini_project.py`: a small event-planner app built with the widget.
+
+## Keyboard shortcuts
+
+Shortcuts work only while the picker is open and in calendar mode. They are disabled in year-selection and input modes, so typing is never interrupted.
+
+| Key | Action |
+|---|---|
+| `Enter` | Confirm the selected date |
+| `Esc` | Cancel and close |
+| `D` | Previous day (can cross into the previous month) |
+| `A` | Next day (can cross into the next month) |
+| `W` | Previous week (stays within the current month) |
+| `S` | Next week (stays within the current month) |
 
 ## Testing
-This project uses `pytest` to cover the date-math and validation logic (leap years, month/year boundary crossing, input parsing).
 
-Install the test dependencies and run the suite:
+`pytest` covers the date logic and validation: leap years, month and year boundary crossing, and input parsing. The widget's UI behavior is checked with smoke tests and manual testing.
+
 ```bash
 pip install -e ".[dev]"
 pytest tests/
 ```
 
 ## Screenshots
-Check out the Persian DatePicker in action:
 
-- **Light Mode**:
+**Light mode**
 
 <div align="center">
-  <img src="screenshots/light_mode_landscape.png" alt="Light Mode">
+  <img src="screenshots/light_mode_landscape.png" alt="Persian DatePicker in light mode">
 </div>
 
-- **Dark Mode**:
+**Dark mode**
 
 <div align="center">
-  <img src="screenshots/dark_mode_landscape.png" alt="Dark Mode">
+  <img src="screenshots/dark_mode_landscape.png" alt="Persian DatePicker in dark mode">
 </div>
 
 ## Changelog
+
 See [CHANGELOG.md](CHANGELOG.md) for version history.
 
-## Contribute
-Found a bug? Report it at [https://github.com/AliAminiCode/flet-persian-datepicker/issues](https://github.com/AliAminiCode/flet-persian-datepicker/issues).
-Developed by [Ali Amini](mailto:aliamini9728@gmail.com).
-Licensed under the [MIT License](https://github.com/AliAminiCode/flet-persian-datepicker/blob/master/LICENSE).
+## Contributing and support
+
+Found a bug or want a feature? Open an issue: <https://github.com/AliAminiCode/flet-persian-datepicker/issues>. When reporting a bug, include your Python, Flet and library versions and a short snippet that reproduces it.
+
+## License
+
+[MIT](https://github.com/AliAminiCode/flet-persian-datepicker/blob/master/LICENSE). Developed by [Ali Amini](mailto:aliamini9728@gmail.com).
